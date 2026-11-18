@@ -196,7 +196,7 @@ td code{font:800 14px/1 ui-monospace,Menlo,monospace;letter-spacing:.06em}
     <div class="brand">
       <span class="eyebrow">Confraternização 2026</span>
       <h1>Dominó <span>PN</span></h1>
-      <p class="tag">O grupo mais desgraçado feito</p>
+      <p class="tag">O grupo mais desgraçado</p>
     </div>
     <form class="card" id="f-code" autocomplete="off">
       <h2>Votação secreta</h2>
@@ -460,7 +460,7 @@ function renderSlide(){
   const s = slides[si], el = $('#show');
   let h = '';
   if (s.kind === 'intro') h = `<div class="slide"><div class="stage" aria-hidden="true"><div class="tile" data-a="6" data-b="6"></div></div>
-      <span class="num">Prêmios ${YEAR}</span><h2>Dominó <span style="color:var(--gold)">PN</span></h2><p class="sub">O grupo mais desgraçado feito</p></div>`;
+      <span class="num">Prêmios ${YEAR}</span><h2>Dominó <span style="color:var(--gold)">PN</span></h2><p class="sub">O grupo mais desgraçado</p></div>`;
   else if (s.kind === 'cat') h = `<div class="slide"><span class="num">Categoria ${s.i + 1} de ${CATS.length}</span><h2>${esc(s.c.title)}</h2>
       ${s.c.subtitle ? `<p class="sub">(${esc(s.c.subtitle)})</p>` : ''}<p class="drum">E o vencedor é…</p></div>`;
   else if (s.kind === 'win') h = `<div class="slide"><span class="num">${esc(s.c.title)} ${YEAR}</span>
@@ -502,7 +502,7 @@ $('#b-certs').addEventListener('click', async () => {
       ${tileMini}<div class="seal"><span>DOMINÓ<br>PN<br>${YEAR}</span></div>
       <span class="kick">Dominó PN · Prêmios ${YEAR}</span>
       <h2 class="ttl">Certificado</h2>
-      <p class="lead">O grupo mais desgraçado feito confere, por votação secreta, a</p>
+      <p class="lead">O grupo mais desgraçado confere, por votação secreta, a</p>
       <p class="who">${esc(w.name)}${w.nickname ? `<small>“${esc(w.nickname)}”</small>` : ''}</p>
       <p class="lead">o honroso título de</p>
       <p class="award">${esc(c.title)} do grupo ${YEAR}</p>
