@@ -223,6 +223,7 @@ td code{font:800 14px/1 ui-monospace,Menlo,monospace;letter-spacing:.06em}
   <section class="view" id="v-review" hidden>
     <div class="qhead"><span class="eyebrow">Confere aí</span><h2>Teus votos</h2><p>Toca numa categoria pra trocar. Depois de enviar não tem volta.</p></div>
     <div class="review" id="review"></div>
+    <p class="demo-flag msg" hidden>Simulação: ao enviar, nada é gravado.</p>
     <div class="row"><button class="btn" id="b-send" type="button">Enviar meus votos</button></div>
     <div class="msg" id="m-send" role="status"></div>
   </section>
@@ -231,6 +232,7 @@ td code{font:800 14px/1 ui-monospace,Menlo,monospace;letter-spacing:.06em}
   <section class="view" id="v-done" hidden>
     <div class="stage small" aria-hidden="true"><div class="tile" data-a="5" data-b="5"></div></div>
     <div class="brand"><span class="eyebrow">Voto registrado</span><h1>Bateu!</h1><p class="tag">Teu voto tá guardado e é segredo. O resultado sai na confra.</p></div>
+    <p class="card demo-flag" hidden><b>Isso foi uma simulação.</b> Nenhum voto foi gravado. Pra votar de verdade, usa o teu código PN-.</p>
   </section>
 
   <!-- ADMIN -->
@@ -318,8 +320,9 @@ async function loadBase(){
 function show(id){ ['v-home','v-vote','v-review','v-done','v-admin'].forEach(v => $('#'+v).hidden = v !== id); window.scrollTo(0,0); }
 
 /* ---------- votação ---------- */
-let voter = null, code = '', answers = {}, step = 0;
-const ERR = { invalid:'Código não encontrado. Confere se digitou certinho.', used:'Esse código já foi usado. Cada um vota uma vez só.', closed:'A votação já foi encerrada.', incomplete:'Falta categoria ou tem voto inválido.' };
+let voter = null, code = '', answers = {}, step = 0, demo = false;
+const ERR = { invalid:'Código não encontrado. Confere se digitou certinho.', used:'Esse código já foi usado. Cada um vota uma vez só.', closed:'A votação já foi encerrada.', incomplete:'Falta categoria ou tem voto inválido.', blocked:'Muitas tentativas erradas. Espera 1 hora e tenta de novo.' };
+function setDemo(on){ demo = on; document.querySelectorAll('.demo-flag').forEach(el => el.hidden = !on); }
 
 $('#f-code').addEventListener('submit', async e => {
   e.preventDefault();
@@ -328,6 +331,12 @@ $('#f-code').addEventListener('submit', async e => {
   if (code && !code.startsWith('PN-')) code = 'PN-' + code.replace(/^PN/, '');
   try {
     await loadBase();
+    if (code === 'PN-TESTE') {
+      setDemo(true); voter = { member_id: 0, name: 'Simulação' }; answers = {}; step = 0; m.textContent = '';
+      $('#hello').textContent = 'Simulação · nada é gravado';
+      renderStep(); show('v-vote'); return;
+    }
+    setDemo(false);
     const r = await rpc('check_code', { p_code: code });
     if (!r.ok) { m.className = 'msg err'; m.textContent = ERR[r.error] || 'Deu ruim. Tenta de novo.'; return; }
     voter = r; answers = {}; step = 0; m.textContent = '';
@@ -369,6 +378,7 @@ $('#review').addEventListener('click', e => {
 $('#b-send').addEventListener('click', async () => {
   const m = $('#m-send'), btn = $('#b-send'); btn.disabled = true; m.className = 'msg'; m.textContent = 'Enviando…';
   const votes = Object.fromEntries(CATS.map(c => [String(c.id), String(answers[c.id])]));
+  if (demo) { m.textContent = ''; btn.disabled = false; $('#v-done .eyebrow').textContent = 'Simulação'; $('#v-done .tag').textContent = 'É assim que a galera vai ver no final.'; show('v-done'); return; }
   try {
     const r = await rpc('cast_ballot', { p_code: code, p_votes: votes });
     if (r.ok) { show('v-done'); return; }
@@ -381,14 +391,14 @@ $('#b-send').addEventListener('click', async () => {
 let pin = '', data = null;
 async function adminLoad(){
   const r = await rpc('admin_overview', { p_pin: pin });
-  if (!r.ok) throw new Error('pin');
+  if (!r.ok) throw new Error(r.error);
   data = r; renderAdmin();
 }
 $('#f-pin').addEventListener('submit', async e => {
   e.preventDefault(); pin = $('#pin').value.trim().toUpperCase();
   const m = $('#m-pin'); m.className = 'msg'; m.textContent = 'Entrando…';
   try { await loadBase(); await adminLoad(); store.set('pn-pin', pin); $('#f-pin').hidden = true; $('#admin').hidden = false; m.textContent = ''; }
-  catch(err){ m.className = 'msg err'; m.textContent = err.message === 'pin' ? 'Senha errada.' : 'Sem conexão.'; }
+  catch(err){ m.className = 'msg err'; m.textContent = err.message === 'pin' ? 'Senha errada.' : err.message === 'blocked' ? ERR.blocked : 'Sem conexão.'; }
 });
 
 function tally(){
